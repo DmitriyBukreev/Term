@@ -3,7 +3,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <limits.h>
-
+#include <wait.h>
+#include <unistd.h>
 
 #ifndef HANDLE_ERROR
 #define HANDLE_ERROR(result, condition) \

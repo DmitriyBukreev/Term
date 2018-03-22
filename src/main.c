@@ -28,6 +28,8 @@ int main(int argn, char **argv)
 {
 	char buf[ARG_MAX] = "";
 	char *args[ARG_NUM + 1];
+	pid_t pid;
+	int stat_loc;
 
 	while (1) {
 		HANDLE_ERROR(fgets(buf, ARG_MAX, stdin), NULL);
@@ -35,10 +37,18 @@ int main(int argn, char **argv)
 			printf("Error: The input line is too long\n");
 			return -ETOOLONG;
 		}
-		if (parser(buf, args) == ETOOMANYARGS) {
+		if (parser(buf, args) == -ETOOMANYARGS) {
 			printf("Error: Too many arguments\n");
 			return -ETOOMANYARGS;
 		}
-		
+
+		pid = fork();
+		HANDLE_ERROR(pid, -1);
+		if (!pid) {
+			// Child
+			execvp(args[0], args);
+		}
+		// Parent
+		wait(&stat_loc);
 	}
 }
