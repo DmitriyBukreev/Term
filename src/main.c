@@ -1,8 +1,7 @@
 #include "precompiled.h"
 #define ARG_MAX 4096
 #define ARG_NUM 128
-#define ETOOLONG 304
-#define ETOOMANYARGS 305
+#define EWRONGCOM 304
 
 // Splits the line into several strings with strtok
 // and makes the array of them
@@ -16,7 +15,7 @@ int parser(char *src, char **dst)
 	while (token != NULL) {
 		dst[iter] = token;
 		if (iter == ARG_NUM)
-			return -ETOOMANYARGS;
+			return -1;
 		iter++;
 		token = strtok(NULL, " \t\n");
 	}
@@ -32,14 +31,16 @@ int main(int argn, char **argv)
 	int stat_loc;
 
 	while (1) {
+		printf("term: ");
 		HANDLE_ERROR(fgets(buf, ARG_MAX, stdin), NULL);
 		if (buf[strlen(buf)-1] != '\n') {
 			printf("Error: The input line is too long\n");
-			return -ETOOLONG;
+			getchar();
+			continue;
 		}
-		if (parser(buf, args) == -ETOOMANYARGS) {
+		if (parser(buf, args) == -1) {
 			printf("Error: Too many arguments\n");
-			return -ETOOMANYARGS;
+			continue;
 		}
 
 		pid = fork();
@@ -47,6 +48,9 @@ int main(int argn, char **argv)
 		if (!pid) {
 			// Child
 			execvp(args[0], args);
+			// Error
+			printf("Сommand not found\n");
+			exit(EWRONGCOM);
 		}
 		// Parent
 		wait(&stat_loc);
