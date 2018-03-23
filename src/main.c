@@ -32,7 +32,7 @@ int main(int argn, char **argv)
 	char wait_f;
 
 	while (1) {
-		printf("term: "); //Prompt
+		printf("term: "); // Prompt
 		HANDLE_ERROR(fgets(buf, ARG_MAX, stdin), NULL);
 		if (buf[strlen(buf)-1] != '\n') {
 			printf("Error: The input line is too long\n");
@@ -44,7 +44,14 @@ int main(int argn, char **argv)
 			continue;
 		}
 
-		//Setting flag to enable or disable wait()
+		// Simple "change dir" implementation
+		if (!strcmp(args[0], "cd"))	{
+			if (chdir(args[1]) == -1)
+				perror("Error");
+			continue;
+		}
+
+		// Setting flag to enable or disable wait()
 		arg_len = strlen(args[0])-1;
 		if (args[0][arg_len] == '&') {
 			args[0][arg_len] = 0;
