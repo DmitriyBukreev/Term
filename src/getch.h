@@ -8,8 +8,9 @@
 } while (0)
 
 #define START_CONTROL 27
-#define KEY_LEFT 129
-#define KEY_RIGHT 130
+#define KEY_BACKSPACE 127
+#define KEY_LEFT 128
+#define KEY_RIGHT 129
 #define KEY_UNDEFINED 304;
 
 int getch(void);

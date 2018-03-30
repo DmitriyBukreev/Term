@@ -2,6 +2,22 @@
 #define ARG_MAX 4096
 #define ARG_NUM 128
 
+#define SAVE_ENDING() do { \
+	if (iter < buf_total && ending_total == 0) { \
+		ending_total = buf_total - iter; \
+		strncpy(ending, buf+iter, ending_total); \
+	} \
+} while (0)
+
+#define PRINT_ENDING() do { \
+	if (iter < buf_total) { \
+		write(1, ending, ending_total); \
+		write(1, " \b", 2); \
+		for (int i = ending_total; i > 0; i--) \
+			write(1, "\b", 1); \
+	} \
+} while (0)
+
 void input(char *buf)
 {
 	int ch;
@@ -11,6 +27,7 @@ void input(char *buf)
 	int ending_total = 0;
 
 	while ((ch = getch()) > 0) {
+		HANDLE_ERROR(ch, -1);
 		switch (ch) {
 		case KEY_LEFT:
 			if (iter > 0) {
@@ -24,19 +41,21 @@ void input(char *buf)
 				iter++;
 			}
 			break;
+		case KEY_BACKSPACE:
+			if (iter > 0) {
+				SAVE_ENDING();
+				write(1, "\b \b", 3);
+				PRINT_ENDING();
+				iter--;
+				buf_total--;
+			}
+			break;
 		default:
 			if (buf_total < ARG_MAX - 1 && ch != '\n') {
-				if (iter < buf_total && ending_total == 0) {
-					ending_total = buf_total - iter;
-					strncpy(ending, buf+iter, ending_total);
-				}
+				SAVE_ENDING();
 				buf[iter] = ch;
 				write(1, &ch, 1);
-				if (iter < buf_total) {
-					write(1, ending, ending_total);
-					for (int i = ending_total; i > 0; i--)
-						write(1, "\b", 1);
-				}
+				PRINT_ENDING();
 				iter++;
 				buf_total++;
 			}
@@ -44,7 +63,7 @@ void input(char *buf)
 		strncpy(buf+iter, ending, ending_total);
 		ending_total = 0;
 		if (ch == '\n') {
-			buf[buf_total] = 0;
+			buf[buf_total+1] = 0;
 			break;
 		}
 	}
@@ -79,17 +98,10 @@ int main(int argn, char **argv)
 	int stat_loc;
 	char wait_f;
 
-	input(buf);
-	printf("\n\n");
-	printf("DEBUG_LINE: %s\n", buf);
 	while (1) {
-		printf("term: "); // Prompt
-		HANDLE_ERROR(fgets(buf, ARG_MAX, stdin), NULL);
-		if (buf[strlen(buf)-1] != '\n') {
-			printf("Error: The input line is too long\n");
-			getchar();
-			continue;
-		}
+		printf("term:"); // Prompt
+		fflush(stdout);
+		input(buf);
 		if (parser(buf, args) == -1) {
 			printf("Error: Too many arguments\n");
 			continue;
