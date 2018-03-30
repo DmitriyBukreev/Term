@@ -5,17 +5,47 @@
 void input(char *buf)
 {
 	int ch;
+	int iter = 0;
+	int buf_total = 0;
+	char ending[ARG_MAX];
+	int ending_total = 0;
 
-	while ((ch = getch()) > 0 && ch != '\n') {
+	while ((ch = getch()) > 0) {
 		switch (ch) {
 		case KEY_LEFT:
-			printf("Left key was pressed\n");
+			if (iter > 0) {
+				write(1, "\b", 1);
+				iter--;
+			}
 			break;
 		case KEY_RIGHT:
-			printf("Right key was pressed\n");
+			if (iter < buf_total) {
+				write(1, &buf[iter], 1);
+				iter++;
+			}
 			break;
 		default:
-			printf("%c\t%i\n", ch, ch);
+			if (buf_total < ARG_MAX - 1 && ch != '\n') {
+				if (iter < buf_total && ending_total == 0) {
+					ending_total = buf_total - iter;
+					strncpy(ending, buf+iter, ending_total);
+				}
+				buf[iter] = ch;
+				write(1, &ch, 1);
+				if (iter < buf_total) {
+					write(1, ending, ending_total);
+					for (int i = ending_total; i > 0; i--)
+						write(1, "\b", 1);
+				}
+				iter++;
+				buf_total++;
+			}
+		}
+		strncpy(buf+iter, ending, ending_total);
+		ending_total = 0;
+		if (ch == '\n') {
+			buf[buf_total] = 0;
+			break;
 		}
 	}
 }
@@ -42,7 +72,7 @@ int parser(char *src, char **dst)
 
 int main(int argn, char **argv)
 {
-	char buf[ARG_MAX] = "";
+	char buf[ARG_MAX];
 	char *args[ARG_NUM + 1];
 	pid_t pid;
 	int arg_len;
@@ -50,6 +80,8 @@ int main(int argn, char **argv)
 	char wait_f;
 
 	input(buf);
+	printf("\n\n");
+	printf("DEBUG_LINE: %s\n", buf);
 	while (1) {
 		printf("term: "); // Prompt
 		HANDLE_ERROR(fgets(buf, ARG_MAX, stdin), NULL);
