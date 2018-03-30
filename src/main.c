@@ -1,6 +1,24 @@
-#include "input.h"
+#include "getch.h"
 #define ARG_MAX 4096
 #define ARG_NUM 128
+
+void input(char *buf)
+{
+	int ch;
+
+	while ((ch = getch()) > 0 && ch != '\n') {
+		switch (ch) {
+		case KEY_LEFT:
+			printf("Left key was pressed\n");
+			break;
+		case KEY_RIGHT:
+			printf("Right key was pressed\n");
+			break;
+		default:
+			printf("%c\t%i\n", ch, ch);
+		}
+	}
+}
 
 // Splits the line into several strings with strtok
 // and makes the array of them
