@@ -1,4 +1,4 @@
-#include "precompiled.h"
+#include "input.h"
 #define ARG_MAX 4096
 #define ARG_NUM 128
 
@@ -31,6 +31,7 @@ int main(int argn, char **argv)
 	int stat_loc;
 	char wait_f;
 
+	input(buf);
 	while (1) {
 		printf("term: "); // Prompt
 		HANDLE_ERROR(fgets(buf, ARG_MAX, stdin), NULL);
