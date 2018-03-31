@@ -1,7 +1,6 @@
-#include "input.h"
 #define ARG_MAX 4096
+#define INFO_MAX 512
 #define ARG_NUM 128
-
 // Splits the line into several strings with strtok
 // and makes the array of them
 // Returns number of strings + 1 (for NULL in the end)
@@ -22,28 +21,58 @@ int parser(char *src, char **dst)
 	return iter;
 }
 
+pid_t pid;
+void kill_child(int sig)
+{
+	if (pid != 0)
+		HANDLE_ERROR(kill(pid, sig), -1);
+}
+
 int main(int argn, char **argv)
 {
-	char buf[ARG_MAX] = "";
-	char *args[ARG_NUM + 1];
-	pid_t pid;
-	int arg_len;
+	char buf[ARG_MAX] = "";  // Input buffer
+	char *user;				// Info for prompt
+	char host[INFO_MAX];
+	char dir[INFO_MAX];
+	char *args[ARG_NUM + 1]; // Parsed tokens
+	char wait_f;			 // Flag setted by '&'
+	int arg_len;			 // Length of first argument
 	int stat_loc;
-	char wait_f;
+	int parsed_num = 0;
+	struct passwd *uidinfo;  // Info about current user
 
-	input(buf);
+	// Initialization
+	uidinfo = getpwuid(getuid());
+	if (uidinfo == NULL) {
+		perror("Error");
+		user = "USER_NOT_DEFINED";
+	} else
+		user = uidinfo->pw_name;
+
+	if (gethostname(host, INFO_MAX) == -1) {
+		perror("Error");
+		strcpy(host, "HOST_NOT_DEFINED");
+	}
+
+	(void) signal(SIGINT, SIG_IGN);
 	while (1) {
-		printf("term: "); // Prompt
+		if (getcwd(dir, INFO_MAX) == NULL) {
+			perror("Error");
+			strcpy(dir, "DIR_NOT_DEFINED");
+		}
+		printf("%s@%s: %s$ ", user, host, dir); // Prompt
 		HANDLE_ERROR(fgets(buf, ARG_MAX, stdin), NULL);
 		if (buf[strlen(buf)-1] != '\n') {
 			printf("Error: The input line is too long\n");
 			getchar();
 			continue;
 		}
-		if (parser(buf, args) == -1) {
+		parsed_num = parser(buf, args);
+		if (parsed_num == -1) {
 			printf("Error: Too many arguments\n");
 			continue;
-		}
+		} else if (parsed_num == 0)
+			continue;
 
 		// Simple "change dir" implementation
 		if (!strcmp(args[0], "cd"))	{
@@ -70,9 +99,13 @@ int main(int argn, char **argv)
 			exit(errno);
 		}
 		// Parent
-		if (wait_f)
+		if (wait_f) {
 			wait(&stat_loc);
-		else
+			(void) signal(SIGINT, SIG_IGN);
+		} else {
 			printf("[%i]\n", pid);
+			(void) signal(SIGINT, kill_child);
+		}
+
 	}
 }

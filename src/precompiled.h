@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <limits.h>
+#include <pwd.h>
 #include <wait.h>
 #include <unistd.h>
 
